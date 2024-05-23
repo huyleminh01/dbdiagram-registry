@@ -1,0 +1,65 @@
+version: "3"
+
+networks:
+  dbdiagram-net:
+    driver: bridge
+
+services:
+  dbdiagram-gateway:
+    container_name: dbdiagram-gateway
+    image: dbdiagram-gateway
+    build: ${GATEWAY_BUILD_PATH}
+    restart: unless-stopped
+    volumes:
+      - ./.env.gateway:/app/.env
+    ports:
+      - 5000:5000
+      - 9876:9876
+    networks:
+      - dbdiagram-net
+
+  dbdiagram-backend01:
+    container_name: dbdiagram-backend01
+    image: dbdiagram-backend
+    build: ${BACKEND_BUILD_PATH}
+    restart: unless-stopped
+    ports:
+      - 5001:5000
+      - 5011:5001
+    volumes:
+      - ./.env.backend:/app/.env
+    networks:
+      - dbdiagram-net
+
+  dbdiagram-backend02:
+    container_name: dbdiagram-backend02
+    image: dbdiagram-backend
+    build: ${BACKEND_BUILD_PATH}
+    restart: unless-stopped
+    ports:
+      - 5002:5000
+      - 5022:5001
+    volumes:
+      - ./.env.backend:/app/.env
+    networks:
+      - dbdiagram-net
+
+  dbdiagram-db:
+    image: mongo:3.6
+    container_name: dbdiagram-db
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    networks:
+      - dbdiagram-net
+    volumes:
+      - ./db:/data/db
+
+  dbdiagram-redis:
+    image: redis:latest
+    container_name: dbdiagram-redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    networks:
+      - dbdiagram-net
