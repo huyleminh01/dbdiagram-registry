@@ -1,22 +1,56 @@
-version: "3"
-
 networks:
   dbdiagram-net:
     driver: bridge
 
 services:
-  dbdiagram-gateway:
-    container_name: dbdiagram-gateway
+  dbdiagram-outer-lb:
+    container_name: dbdiagram-outer-lb
+    image: haproxytech/haproxy-alpine:2.4
+    restart: unless-stopped
+    volumes:
+      - ./outer-lb/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    ports:
+      - 5000:5000
+      - 8404:8404
+    networks:
+      - dbdiagram-net
+    depends_on:
+      - dbdiagram-gateway01
+      - dbdiagram-gateway02
+
+  dbdiagram-gateway01:
+    container_name: dbdiagram-gateway01
     image: dbdiagram-gateway
     build: ${GATEWAY_BUILD_PATH}
     restart: unless-stopped
     volumes:
       - ./.env.gateway:/app/.env
-    ports:
-      - 5000:5000
-      - 9876:9876
+      - ./logs/gateway01:/app/logs
+    # ports:
+    #   - 5000:5000
+    #   - 9876:9876
     networks:
       - dbdiagram-net
+    depends_on:
+      - dbdiagram-backend01
+      - dbdiagram-backend02
+
+  dbdiagram-gateway02:
+    container_name: dbdiagram-gateway02
+    image: dbdiagram-gateway
+    build: ${GATEWAY_BUILD_PATH}
+    restart: unless-stopped
+    volumes:
+      - ./.env.gateway:/app/.env
+      - ./logs/gateway02:/app/logs
+    # ports:
+    #   - 5000:5000
+    #   - 9876:9876
+    networks:
+      - dbdiagram-net
+    depends_on:
+      - dbdiagram-backend01
+      - dbdiagram-backend02
 
   dbdiagram-backend01:
     container_name: dbdiagram-backend01
@@ -30,6 +64,8 @@ services:
       - ./.env.backend:/app/.env
     networks:
       - dbdiagram-net
+    depends_on:
+      - dbdiagram-db
 
   dbdiagram-backend02:
     container_name: dbdiagram-backend02
@@ -43,6 +79,8 @@ services:
       - ./.env.backend:/app/.env
     networks:
       - dbdiagram-net
+    depends_on:
+      - dbdiagram-db
 
   dbdiagram-db:
     image: mongo:3.6
@@ -55,11 +93,73 @@ services:
     volumes:
       - ./db:/data/db
 
-  dbdiagram-redis:
+  dbdiagram-redis01:
     image: redis:latest
-    container_name: dbdiagram-redis
+    container_name: dbdiagram-redis01
     restart: unless-stopped
+    command: redis-server /etc/redis/redis.conf
     ports:
       - 6379:6379
+    volumes:
+      - ./redis/config/primary.conf:/etc/redis/redis.conf
+      - ./redis/data/primary:/data
     networks:
       - dbdiagram-net
+
+  dbdiagram-redis02:
+    image: redis:latest
+    container_name: dbdiagram-redis02
+    restart: unless-stopped
+    command: redis-server /etc/redis/redis.conf
+    ports:
+      - 6380:6379
+    volumes:
+      - ./redis/config/secondary.conf:/etc/redis/redis.conf
+      - ./redis/data/secondary:/data
+    networks:
+      - dbdiagram-net
+
+  dbdiagram-sentinel01:
+    image: redis:latest
+    container_name: dbdiagram-sentinel01
+    restart: unless-stopped
+    command: redis-server /etc/redis/sentienl.conf --sentinel
+    ports:
+      - 26379:26379
+    volumes:
+      - ./redis/config/sentinel01.conf:/etc/redis/sentienl.conf
+    networks:
+      - dbdiagram-net
+    depends_on:
+      - dbdiagram-redis01
+      - dbdiagram-redis02
+
+  dbdiagram-sentinel02:
+    image: redis:latest
+    container_name: dbdiagram-sentinel02
+    restart: unless-stopped
+    command: redis-server /etc/redis/sentienl.conf --sentinel
+    ports:
+      - 26380:26379
+    volumes:
+      - ./redis/config/sentinel02.conf:/etc/redis/sentienl.conf
+    networks:
+      - dbdiagram-net
+    depends_on:
+      - dbdiagram-redis01
+      - dbdiagram-redis02
+
+  dbdiagram-sentinel03:
+    image: redis:latest
+    container_name: dbdiagram-sentinel03
+    restart: unless-stopped
+    command: redis-server /etc/redis/sentienl.conf --sentinel
+    ports:
+      - 26381:26379
+    volumes:
+      - ./redis/config/sentinel03.conf:/etc/redis/sentienl.conf
+    networks:
+      - dbdiagram-net
+    depends_on:
+      - dbdiagram-redis01
+      - dbdiagram-redis02
