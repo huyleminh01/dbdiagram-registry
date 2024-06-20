@@ -101,8 +101,8 @@ services:
     ports:
       - 6379:6379
     volumes:
-      - ./redis/config/primary.conf:/etc/redis/redis.conf
-      - ./redis/data/primary:/data
+      - ./redis/primary/config/:/etc/redis/
+      - ./redis/primary/data:/data
     networks:
       - dbdiagram-net
 
@@ -114,8 +114,8 @@ services:
     ports:
       - 6380:6379
     volumes:
-      - ./redis/config/secondary.conf:/etc/redis/redis.conf
-      - ./redis/data/secondary:/data
+      - ./redis/secondary/config/:/etc/redis/
+      - ./redis/secondary/data:/data
     networks:
       - dbdiagram-net
 
@@ -123,11 +123,11 @@ services:
     image: redis:latest
     container_name: dbdiagram-sentinel01
     restart: unless-stopped
-    command: redis-server /etc/redis/sentienl.conf --sentinel
+    command: redis-server /etc/redis/sentinel.conf --sentinel
     ports:
       - 26379:26379
     volumes:
-      - ./redis/config/sentinel01.conf:/etc/redis/sentienl.conf
+      - ./redis/sentinel01/config/:/etc/redis/
     networks:
       - dbdiagram-net
     depends_on:
@@ -138,11 +138,11 @@ services:
     image: redis:latest
     container_name: dbdiagram-sentinel02
     restart: unless-stopped
-    command: redis-server /etc/redis/sentienl.conf --sentinel
+    command: redis-server /etc/redis/sentinel.conf --sentinel
     ports:
       - 26380:26379
     volumes:
-      - ./redis/config/sentinel02.conf:/etc/redis/sentienl.conf
+      - ./redis/sentinel02/config/:/etc/redis/
     networks:
       - dbdiagram-net
     depends_on:
@@ -153,11 +153,11 @@ services:
     image: redis:latest
     container_name: dbdiagram-sentinel03
     restart: unless-stopped
-    command: redis-server /etc/redis/sentienl.conf --sentinel
+    command: redis-server /etc/redis/sentinel.conf --sentinel
     ports:
       - 26381:26379
     volumes:
-      - ./redis/config/sentinel03.conf:/etc/redis/sentienl.conf
+      - ./redis/sentinel03/config/:/etc/redis/
     networks:
       - dbdiagram-net
     depends_on:

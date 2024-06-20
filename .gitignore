@@ -9,6 +9,5 @@ logs/gateway01/*
 !logs/gateway02/.gitkeep
 logs/gateway02/*
 
-!redis/data/.gitkeep
-redis/data/primary
-redis/data/secondary
+redis/*/data/*
+!redis/*/data/.gitkeep
